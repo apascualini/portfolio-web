@@ -1,25 +1,33 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
 import { useEffect } from 'react';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { CartProvider } from './context/CartContext';
+import { CheckoutPage } from './pages/CheckoutPage';
+import { CheckoutResult } from './pages/CheckoutResult';
+import { CatalogPage } from './pages/CatalogPage';
+import { AdminLoginPage } from './pages/AdminLoginPage';
+import { AdminDashboardPage } from './pages/AdminDashboardPage';
 
-function App() {
-  const [count, setCount] = useState(0);
-  
+export function App() {
   useEffect(() => {
-    // Ping silencioso al cargar la página
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
     fetch(`${apiUrl}/health`).catch(() => {});
   }, []);
 
   return (
-    <div>
-      <h1>Mi Portfolio</h1>
-    </div>
+    <CartProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<CatalogPage />} />
+          <Route path="/checkout" element={<CheckoutPage />} />
+          <Route path="/checkout/success" element={<CheckoutResult outcome="success" />} />
+          <Route path="/checkout/pending" element={<CheckoutResult outcome="pending" />} />
+          <Route path="/checkout/failure" element={<CheckoutResult outcome="failure" />} />
+          <Route path="/admin/login" element={<AdminLoginPage />} />
+          <Route path="/admin" element={<AdminDashboardPage />} />
+        </Routes>
+      </BrowserRouter>
+    </CartProvider>
   );
-
 }
 
-export default App
+export default App;
