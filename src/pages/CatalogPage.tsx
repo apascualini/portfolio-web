@@ -4,6 +4,7 @@ import { apiFetch } from '../api/client';
 import { useCart } from '../context/CartContext';
 import type { Category, PagedResult, Product } from '../types/store';
 import { formatARS } from '../utils/formatters';
+import { getOptimizedImageUrl } from '../utils/cloudinary';
 
 export function CatalogPage() {
   const navigate = useNavigate();
@@ -171,17 +172,20 @@ export function CatalogPage() {
               }}
             >
               <div>
-                <img
-                  src={product.imageUrl || 'https://placehold.co'}
-                  alt={product.name}
-                  style={{
-                    width: '100%',
-                    height: 180,
-                    objectFit: 'cover',
-                    borderRadius: 6,
-                    marginBottom: 12,
-                  }}
-                />
+              <img
+                src={getOptimizedImageUrl(product.imageUrl)}
+                alt={product.name}
+                loading="lazy"
+                style={{
+                  width: '100%',
+                  aspectRatio: '1 / 1',
+                  objectFit: 'contain',
+                  backgroundColor: '#ffffff',
+                  border: '1px solid #f1f5f9',
+                  borderRadius: 6,
+                  marginBottom: 12,
+                }}
+              />
                 <small style={{ color: '#666' }}>{product.categoryName}</small>
                 <h3 style={{ margin: '4px 0 8px' }}>{product.name}</h3>
                 <p style={{ fontSize: 14, color: '#444', margin: '0 0 12px' }}>

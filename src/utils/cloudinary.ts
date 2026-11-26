@@ -34,3 +34,20 @@ export async function uploadImageToCloudinary(file: File): Promise<string> {
   const data = await response.json();
   return data.secure_url as string;
 }
+
+export function getOptimizedImageUrl(
+  url?: string,
+  width = 500,
+  height = 500,
+  mode: 'fill' | 'pad' = 'pad'
+): string {
+  if (!url) return 'https://placehold.co';
+  if (!url.includes('/upload/')) return url;
+
+  const transform =
+    mode === 'pad'
+      ? `c_pad,b_white,w_${width},h_${height},f_auto,q_auto`
+      : `c_fill,g_auto,w_${width},h_${height},f_auto,q_auto`;
+
+  return url.replace('/upload/', `/upload/${transform}/`);
+}
