@@ -5,6 +5,7 @@ import { apiFetch } from '../api/client';
 import type { Category, PagedResult, Product } from '../types/store';
 import { formatARS } from '../utils/formatters';
 import { AdminOrdersTab } from '../components/AdminOrdersTab';
+import { uploadImageToCloudinary } from '../utils/cloudinary';
 
 export function AdminDashboardPage() {
   const navigate = useNavigate();
@@ -27,6 +28,26 @@ export function AdminDashboardPage() {
     isActive: true,
     categoryId: 0,
   });
+
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadError(null);
+    setUploadingImage(true);
+
+    try {
+      const secureUrl = await uploadImageToCloudinary(file);
+      setProdForm((prev) => ({ ...prev, imageUrl: secureUrl }));
+    } catch (err: any) {
+      setUploadError(err.message || 'No se pudo subir la imagen.');
+    } finally {
+      setUploadingImage(false);
+    }
+  };
 
   // 1. Verificar cookie de sesión al entrar
   useEffect(() => {
@@ -202,11 +223,38 @@ export function AdminDashboardPage() {
               value={prodForm.stock}
               onChange={(e) => setProdForm({ ...prodForm, stock: Number(e.target.value) })}
             />
-            <input
-              placeholder="URL de Imagen (Cloudinary)"
-              value={prodForm.imageUrl}
-              onChange={(e) => setProdForm({ ...prodForm, imageUrl: e.target.value })}
-            />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <label style={{ fontSize: 13, fontWeight: 'bold' }}>
+                Foto del producto:
+                <input
+                  type="file"
+                  accept="image/*"
+                  disabled={uploadingImage}
+                  onChange={handleImageUpload}
+                  style={{ display: 'block', marginTop: 4 }}
+                />
+              </label>
+
+              {uploadingImage && <small style={{ color: '#2563eb' }}>Subiendo imagen...</small>}
+              {uploadError && <small style={{ color: 'crimson' }}>{uploadError}</small>}
+
+              {prodForm.imageUrl && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <img
+                    src={prodForm.imageUrl}
+                    alt="Vista previa"
+                    style={{ width: 56, height: 56, objectFit: 'cover', borderRadius: 4, border: '1px solid #ccc' }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setProdForm((prev) => ({ ...prev, imageUrl: '' }))}
+                    style={{ fontSize: 12, color: 'crimson' }}
+                  >
+                    Quitar foto
+                  </button>
+                </div>
+              )}
+            </div>
             <input
               placeholder="Descripción breve"
               value={prodForm.description}
