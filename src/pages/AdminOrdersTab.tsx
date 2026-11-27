@@ -3,6 +3,16 @@ import { apiFetch } from '../api/client';
 import type { OrderDetail, OrderSummary, PagedResult } from '../types/store';
 import { formatARS } from '../utils/formatters';
 
+const STATUS_BADGES: Record<string, string> = {
+  Approved: 'bg-emerald-100 text-emerald-800',
+  Preparing: 'bg-amber-100 text-amber-800',
+  Shipped: 'bg-sky-100 text-sky-800',
+  Delivered: 'bg-slate-200 text-slate-800',
+  Pending: 'bg-yellow-50 text-yellow-700 border border-yellow-200',
+  Rejected: 'bg-rose-100 text-rose-800',
+  Cancelled: 'bg-rose-100 text-rose-800',
+};
+
 export function AdminOrdersTab() {
   const [orders, setOrders] = useState<OrderSummary[]>([]);
   const [statusFilter, setStatusFilter] = useState('Approved');
@@ -43,10 +53,14 @@ export function AdminOrdersTab() {
   };
 
   return (
-    <div>
-      {/* Filtros */}
-      <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
-        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+    <div className="space-y-4">
+      {/* Barra de Filtros */}
+      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row gap-3">
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="px-3.5 py-2 bg-white border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        >
           <option value="">Todos los estados</option>
           <option value="Approved">Pagados (Listos para preparar)</option>
           <option value="Preparing">En preparación</option>
@@ -56,101 +70,183 @@ export function AdminOrdersTab() {
           <option value="Cancelled">Cancelados</option>
         </select>
 
-        <input
-          placeholder="Buscar por #ID, nombre o DNI..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-        <button onClick={loadOrders}>Buscar</button>
+        <div className="flex-1 flex gap-2">
+          <input
+            placeholder="Buscar por #ID, nombre o DNI..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && loadOrders()}
+            className="flex-1 px-3.5 py-2 bg-white border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+          <button
+            onClick={loadOrders}
+            className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium rounded-xl cursor-pointer"
+          >
+            Buscar
+          </button>
+        </div>
       </div>
 
-      {loading ? (
-        <p>Cargando pedidos...</p>
-      ) : (
-        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-          <thead>
-            <tr style={{ borderBottom: '2px solid #ddd' }}>
-              <th>#</th>
-              <th>Fecha</th>
-              <th>Cliente</th>
-              <th>DNI/CUIT</th>
-              <th>Destino</th>
-              <th>Total</th>
-              <th>Estado</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {orders.map((o) => (
-              <tr key={o.id} style={{ borderBottom: '1px solid #eee' }}>
-                <td>#{o.id}</td>
-                <td>{new Date(o.createdAt).toLocaleDateString('es-AR')}</td>
-                <td>{o.customerFullName}</td>
-                <td>{o.dniOrCuit}</td>
-                <td>{o.city}, {o.province}</td>
-                <td><strong>{formatARS(o.totalAmount)}</strong></td>
-                <td>{o.status}</td>
-                <td style={{ display: 'flex', gap: 6, padding: '8px 0' }}>
-                  <button onClick={() => openDetail(o.id)}>Ver Etiqueta / Detalle</button>
-                  {o.status === 'Approved' && (
-                    <button onClick={() => changeStatus(o.id, 'Shipped')}>
-                      Marcar Despachado
-                    </button>
-                  )}
-                </td>
+      {/* Tabla de Pedidos */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-x-auto">
+        {loading ? (
+          <p className="p-8 text-center text-sm text-slate-500">Cargando pedidos...</p>
+        ) : orders.length === 0 ? (
+          <p className="p-8 text-center text-sm text-slate-500">No hay pedidos en este estado.</p>
+        ) : (
+          <table className="w-full text-left border-collapse text-sm">
+            <thead>
+              <tr className="border-b border-slate-200 bg-slate-50 text-xs font-semibold text-slate-600 uppercase">
+                <th className="py-3.5 px-4">#Pedido</th>
+                <th className="py-3.5 px-4">Fecha</th>
+                <th className="py-3.5 px-4">Cliente</th>
+                <th className="py-3.5 px-4">DNI / CUIT</th>
+                <th className="py-3.5 px-4">Destino</th>
+                <th className="py-3.5 px-4">Total</th>
+                <th className="py-3.5 px-4">Estado</th>
+                <th className="py-3.5 px-4 text-right">Acciones</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {orders.map((o) => (
+                <tr key={o.id} className="hover:bg-slate-50/80 transition">
+                  <td className="py-3.5 px-4 font-bold text-slate-900">#{o.id}</td>
+                  <td className="py-3.5 px-4 text-slate-500">
+                    {new Date(o.createdAt).toLocaleDateString('es-AR')}
+                  </td>
+                  <td className="py-3.5 px-4 font-medium text-slate-900">{o.customerFullName}</td>
+                  <td className="py-3.5 px-4 text-slate-600">{o.dniOrCuit}</td>
+                  <td className="py-3.5 px-4 text-slate-600">
+                    {o.city}, {o.province}
+                  </td>
+                  <td className="py-3.5 px-4 font-bold text-slate-900">{formatARS(o.totalAmount)}</td>
+                  <td className="py-3.5 px-4">
+                    <span
+                      className={`inline-block text-xs font-semibold px-2.5 py-1 rounded-full ${
+                        STATUS_BADGES[o.status] || 'bg-slate-100 text-slate-700'
+                      }`}
+                    >
+                      {o.status}
+                    </span>
+                  </td>
+                  <td className="py-3.5 px-4 text-right space-x-2 whitespace-nowrap">
+                    <button
+                      onClick={() => openDetail(o.id)}
+                      className="px-3 py-1.5 text-xs font-medium bg-white border border-slate-300 hover:bg-slate-50 rounded-lg cursor-pointer"
+                    >
+                      Ver Etiqueta
+                    </button>
+                    {o.status === 'Approved' && (
+                      <button
+                        onClick={() => changeStatus(o.id, 'Shipped')}
+                        className="px-3 py-1.5 text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg cursor-pointer"
+                      >
+                        Despachar
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
 
-      {/* Modal de Detalle para Etiqueta y Facturación */}
+      {/* Modal de Etiqueta y Detalle */}
       {selectedOrder && (
         <div
           onClick={() => setSelectedOrder(null)}
-          style={{
-            position: 'fixed',
-            inset: 0,
-            backgroundColor: 'rgba(0,0,0,0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 50,
-          }}
+          className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            style={{ background: '#fff', padding: 24, borderRadius: 8, maxWidth: 540, width: '100%' }}
+            className="bg-white rounded-2xl border border-slate-200 shadow-xl max-w-lg w-full p-6 space-y-4"
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <h3 style={{ marginTop: 0 }}>Pedido #{selectedOrder.id} ({selectedOrder.status})</h3>
-              <button onClick={() => setSelectedOrder(null)}>✕</button>
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2.5">
+                <h3 className="text-lg font-bold text-slate-900">Pedido #{selectedOrder.id}</h3>
+                <span
+                  className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${
+                    STATUS_BADGES[selectedOrder.status] || 'bg-slate-100'
+                  }`}
+                >
+                  {selectedOrder.status}
+                </span>
+              </div>
+              <button
+                onClick={() => setSelectedOrder(null)}
+                className="w-8 h-8 rounded-lg text-slate-400 hover:bg-slate-100 cursor-pointer"
+              >
+                ✕
+              </button>
             </div>
 
-            <p><strong>Cliente:</strong> {selectedOrder.customerFullName}</p>
-            <p><strong>DNI / CUIT:</strong> {selectedOrder.dniOrCuit} ({selectedOrder.taxCondition})</p>
-            <p><strong>Teléfono:</strong> {selectedOrder.customerPhone} | <strong>Email:</strong> {selectedOrder.customerEmail}</p>
-            <p>
-              <strong>Dirección de envío:</strong> {selectedOrder.street} {selectedOrder.streetNumber}{' '}
-              {selectedOrder.floorApartment && `(${selectedOrder.floorApartment})`}, CP {selectedOrder.postalCode},{' '}
-              {selectedOrder.city}, {selectedOrder.province}
-            </p>
+            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 text-sm space-y-1.5">
+              <p>
+                <span className="font-semibold text-slate-700">Destinatario:</span>{' '}
+                {selectedOrder.customerFullName}
+              </p>
+              <p>
+                <span className="font-semibold text-slate-700">DNI / CUIT:</span>{' '}
+                {selectedOrder.dniOrCuit} ({selectedOrder.taxCondition})
+              </p>
+              <p>
+                <span className="font-semibold text-slate-700">Contacto:</span>{' '}
+                {selectedOrder.customerPhone} — {selectedOrder.customerEmail}
+              </p>
+              <p>
+                <span className="font-semibold text-slate-700">Domicilio:</span>{' '}
+                {selectedOrder.street} {selectedOrder.streetNumber}{' '}
+                {selectedOrder.floorApartment && `(${selectedOrder.floorApartment})`}, CP{' '}
+                {selectedOrder.postalCode}, {selectedOrder.city}, {selectedOrder.province}
+              </p>
+            </div>
 
-            <h4>Productos a empaquetar:</h4>
-            <ul>
-              {selectedOrder.items.map((item) => (
-                <li key={item.productId}>
-                  {item.quantity}x {item.productName} — {formatARS(item.subtotal)}
-                </li>
-              ))}
-            </ul>
-            <p>Envío: {formatARS(selectedOrder.shippingCost)} | <strong>Total: {formatARS(selectedOrder.totalAmount)}</strong></p>
+            <div>
+              <h4 className="text-xs font-bold uppercase text-slate-500 mb-2">
+                Productos a empaquetar
+              </h4>
+              <ul className="divide-y divide-slate-100 text-sm border border-slate-200 rounded-xl px-3">
+                {selectedOrder.items.map((item) => (
+                  <li key={item.productId} className="py-2 flex justify-between">
+                    <span>
+                      <strong>{item.quantity}x</strong> {item.productName}
+                    </span>
+                    <span className="font-medium">{formatARS(item.subtotal)}</span>
+                  </li>
+                ))}
+              </ul>
+              <div className="flex justify-between text-sm mt-3 px-1">
+                <span className="text-slate-500">Envío: {formatARS(selectedOrder.shippingCost)}</span>
+                <span className="font-bold text-slate-900">
+                  Total: {formatARS(selectedOrder.totalAmount)}
+                </span>
+              </div>
+            </div>
 
-            <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
-              <button onClick={() => changeStatus(selectedOrder.id, 'Preparing')}>En preparación</button>
-              <button onClick={() => changeStatus(selectedOrder.id, 'Shipped')}>Despachado</button>
-              <button onClick={() => changeStatus(selectedOrder.id, 'Delivered')}>Entregado</button>
-              <button onClick={() => changeStatus(selectedOrder.id, 'Cancelled')} style={{ color: 'crimson' }}>
+            <div className="pt-3 border-t border-slate-100 flex flex-wrap gap-2">
+              <button
+                onClick={() => changeStatus(selectedOrder.id, 'Preparing')}
+                className="px-3 py-2 text-xs font-semibold bg-amber-100 hover:bg-amber-200 text-amber-900 rounded-xl cursor-pointer"
+              >
+                En preparación
+              </button>
+              <button
+                onClick={() => changeStatus(selectedOrder.id, 'Shipped')}
+                className="px-3 py-2 text-xs font-semibold bg-sky-600 hover:bg-sky-700 text-white rounded-xl cursor-pointer"
+              >
+                Marcar Despachado
+              </button>
+              <button
+                onClick={() => changeStatus(selectedOrder.id, 'Delivered')}
+                className="px-3 py-2 text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl cursor-pointer"
+              >
+                Entregado
+              </button>
+              <button
+                onClick={() => changeStatus(selectedOrder.id, 'Cancelled')}
+                className="px-3 py-2 text-xs font-semibold bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-xl ml-auto cursor-pointer"
+              >
                 Cancelar (devuelve stock)
               </button>
             </div>

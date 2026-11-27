@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { apiFetch } from '../api/client';
 
 export function AdminLoginPage() {
@@ -29,29 +29,60 @@ export function AdminLoginPage() {
   };
 
   return (
-    <div style={{ maxWidth: 380, margin: '60px auto', padding: 24, border: '1px solid #ddd', borderRadius: 8 }}>
-      <h2 style={{ marginTop: 0 }}>Panel de Administración</h2>
-      {error && <p style={{ color: 'crimson' }}>{error}</p>}
+    <div className="min-h-screen bg-slate-100 flex flex-col justify-center items-center p-4">
+      <div className="max-w-sm w-full bg-white rounded-2xl border border-slate-200 shadow-sm p-8">
+        <div className="text-center mb-6">
+          <span className="text-3xl">🔐</span>
+          <h1 className="text-xl font-bold text-slate-900 mt-2">Acceso Administrador</h1>
+          <p className="text-xs text-slate-500 mt-1">Ingresá para gestionar productos y pedidos</p>
+        </div>
 
-      <form onSubmit={handleSubmit} style={{ display: 'grid', gap: 12 }}>
-        <input
-          type="email"
-          required
-          placeholder="Email de administrador"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-        <input
-          type="password"
-          required
-          placeholder="Contraseña"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
-        <button type="submit" disabled={loading} style={{ padding: '10px', cursor: 'pointer' }}>
-          {loading ? 'Ingresando...' : 'Iniciar Sesión'}
-        </button>
-      </form>
+        {error && (
+          <div className="mb-4 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">Email</label>
+            <input
+              type="email"
+              required
+              placeholder="admin@tutienda.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">Contraseña</label>
+            <input
+              type="password"
+              required
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full py-3 px-4 bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white text-sm font-semibold rounded-xl transition cursor-pointer"
+          >
+            {loading ? 'Ingresando...' : 'Iniciar Sesión'}
+          </button>
+        </form>
+
+        <div className="mt-6 text-center">
+          <Link to="/" className="text-xs text-slate-500 hover:text-indigo-600">
+            ← Volver a la tienda pública
+          </Link>
+        </div>
+      </div>
     </div>
   );
 }
