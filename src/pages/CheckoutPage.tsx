@@ -10,6 +10,9 @@ import {
   isValidDniOrCuit,
   isValidPostalCodeAR,
 } from '../utils/formatters';
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useCustomerAuth } from '../context/CustomerAuthContext';
 
 export function CheckoutPage() {
   const { items, subtotal } = useCart();
@@ -29,6 +32,26 @@ export function CheckoutPage() {
     city: '',
     province: 'Ciudad Autónoma de Buenos Aires',
   });
+
+  const navigate = useNavigate();
+  const { customer, loading: authLoading } = useCustomerAuth();
+
+  useEffect(() => {
+    if (!authLoading && !customer) {
+      navigate('/login?redirect=/checkout', { replace: true });
+    } else if (customer) {
+      setForm((prev) => ({
+        ...prev,
+        customerFullName: prev.customerFullName || customer.fullName,
+        customerEmail: customer.email,
+      }));
+    }
+  }, [customer, authLoading, navigate]);
+
+  if (authLoading || !customer) {
+    return <div className="min-h-screen flex items-center justify-center text-sm text-slate-500">Verificando cuenta...</div>;
+  }
+
 
   const shippingCost =
     form.province === 'Ciudad Autónoma de Buenos Aires' ? 4500 : 8500;
@@ -122,7 +145,7 @@ export function CheckoutPage() {
                     className={inputClass}
                     placeholder="tu@email.com"
                     value={form.customerEmail}
-                    onChange={(e) => setForm({ ...form, customerEmail: e.target.value })}
+                    readOnly={true}
                   />
                 </div>
                 <div>
